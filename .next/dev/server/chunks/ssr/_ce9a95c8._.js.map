@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///Users/t-harun/gitProject/demoNextjs-project/src/app/layout.tsx"],"sourcesContent":["type Props = {\n  children: React.ReactNode\n}\n\nexport default function RootLayout({ children }: Props) {\n  return (\n    <html>\n      <body>\n        {children}\n      </body>\n    </html>\n  )\n}"],"names":[],"mappings":";;;;;;AAIe,SAAS,WAAW,EAAE,QAAQ,EAAS;IACpD,qBACE,8OAAC;kBACC,cAAA,8OAAC;sBACE;;;;;;;;;;;AAIT"}},
+    {"offset": {"line": 29, "column": 0}, "map": {"version":3,"sources":["file:///Users/t-harun/gitProject/demoNextjs-project/node_modules/next/src/server/route-modules/app-page/vendored/rsc/react-jsx-dev-runtime.ts"],"sourcesContent":["module.exports = (\n  require('../../module.compiled') as typeof import('../../module.compiled')\n).vendored['react-rsc']!.ReactJsxDevRuntime\n"],"names":["module","exports","require","vendored","ReactJsxDevRuntime"],"mappings":"AAAAA,OAAOC,OAAO,GACZC,QAAQ,4HACRC,QAAQ,CAAC,YAAY,CAAEC,kBAAkB","ignoreList":[0]}}]
+}
