@@ -1,5 +1,9 @@
 import "./globals.css";
 import { ReactNode } from "react";
+import { Geist } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata = {
   title: "育児アプリ",
@@ -12,7 +16,7 @@ export default function RootLayout({
   children: ReactNode;
 }) {
   return (
-    <html lang="ja">
+    <html lang="ja" className={cn("font-sans", geist.variable)}>
       <body className="min-h-screen bg-slate-50 text-slate-800">
         {children}
       </body>
