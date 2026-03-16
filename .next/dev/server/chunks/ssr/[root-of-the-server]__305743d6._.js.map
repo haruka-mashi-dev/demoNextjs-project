@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 18, "column": 0}, "map": {"version":3,"sources":["file:///Users/t-harun/gitProject/demoNextjs-project/src/app/page.tsx"],"sourcesContent":["import Link from \"next/link\";\n\nexport default function HomePage() {\n    return (\n        <div>\n            <h1>HOME🏠</h1>\n            <Link href=\"/sleep\">睡眠ログ</Link>\n        </div>\n    );\n}"],"names":[],"mappings":";;;;;AAAA;;;AAEe,SAAS;IACpB,qBACI,8OAAC;;0BACG,8OAAC;0BAAG;;;;;;0BACJ,8OAAC,0LAAI;gBAAC,MAAK;0BAAS;;;;;;;;;;;;AAGhC"}}]
-}

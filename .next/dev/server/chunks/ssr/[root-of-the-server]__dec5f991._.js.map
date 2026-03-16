@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 18, "column": 0}, "map": {"version":3,"sources":["file:///Users/t-harun/stuby-projects/next-js-beginner/app/sleep/page.tsx"],"sourcesContent":["'use Client'\n\nimport { useState } from \"react\";\n\nexport default function SleepPage() {\n  const [bedTime, setBedTime] = useState(\"\");\n  const [wakeUpTime, setWakeUpTime] = useState(\"\");\n  const [isOhirune, setIsOhirune] = useState(false);\n  const [sleepLogs, setSleepLogs] = useState([]);\n  return (\n  <div>\n    <h1>👶🌙💤娘の睡眠記録👶🌙💤</h1>\n  </div>\n  )\n}"],"names":[],"mappings":";;;;;AAEA;AAFA;;;AAIe,SAAS;IACtB,MAAM,CAAC,SAAS,WAAW,GAAG,IAAA,iNAAQ,EAAC;IACvC,MAAM,CAAC,YAAY,cAAc,GAAG,IAAA,iNAAQ,EAAC;IAC7C,MAAM,CAAC,WAAW,aAAa,GAAG,IAAA,iNAAQ,EAAC;IAC3C,MAAM,CAAC,WAAW,aAAa,GAAG,IAAA,iNAAQ,EAAC,EAAE;IAC7C,qBACA,8OAAC;kBACC,cAAA,8OAAC;sBAAG;;;;;;;;;;;AAGR"}}]
-}
