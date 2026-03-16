@@ -19,11 +19,20 @@ export default function SleepPage() {
 };
 
   return (
-    <div>
-      <h1>👶🌙💤娘の睡眠記録👶🌙💤</h1>
-      <SleepForm sleepLogs={sleepLogs} setSleepLogs={setSleepLogs} />
-      <SleepList sleepLogs={sleepLogs} deleteRecord={deleteRecord} />
-      <SleepTotal sleepLogs={sleepLogs}></SleepTotal>
-    </div>
+    <main className="min-h-screen bg-slate-50 px-4 py-8">
+      <div className="mx-auto max-w-2xl space-y-6">
+        <header className="text-center space-y-2">
+        <h1 className="text-3xl font-bold text-slate-800 sm:text-4xl">
+          👶🌙💤娘の睡眠記録👶🌙💤
+        </h1>
+        <p className="text-sm text-slate-500 sm:text-base">
+          毎日の睡眠をかんたんに記録しましょう📝
+        </p>
+        </header>
+        <SleepForm sleepLogs={sleepLogs} setSleepLogs={setSleepLogs} />
+        <SleepList sleepLogs={sleepLogs} deleteRecord={deleteRecord} />
+        <SleepTotal sleepLogs={sleepLogs}></SleepTotal>
+      </div>
+    </main>
   )
 }
