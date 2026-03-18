@@ -1,12 +1,11 @@
 'use client'
 
-import { useEffect, useState } from "react";
+import {useState } from "react";
 
 import SleepForm from "@/components/SleepForm"
-import { SleepRecord } from "@/types/sleep"
 import SleepList from "@/components/SleepList";
 import SleepTotal from "@/components/SleepTotal";
-
+import { SleepRecord } from "@/types/sleep"
 
 export default function SleepPage() {
   const [sleepLogs, setSleepLogs] = useState<SleepRecord[]>([]);
@@ -30,8 +29,10 @@ export default function SleepPage() {
         </p>
         </header>
         <SleepForm sleepLogs={sleepLogs} setSleepLogs={setSleepLogs} />
-        <SleepList sleepLogs={sleepLogs} deleteRecord={deleteRecord} />
-        <SleepTotal sleepLogs={sleepLogs}></SleepTotal>
+         <div className="grid gap-6">
+          <SleepList sleepLogs={sleepLogs} deleteRecord={deleteRecord} />
+          {/* <SleepTotal sleepLogs={sleepLogs} />  */}
+        </div>
       </div>
     </main>
   )

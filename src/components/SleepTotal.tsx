@@ -29,11 +29,11 @@ export default function SleepTotal({sleepLogs}: Props) {
     }, 0);
 
     return (
-        <div>
-            <h3>合計値</h3>
-            <div>夜の睡眠：{formatMinutes(nightTotalMinutes)}</div>
-            <div>お昼寝：{formatMinutes(ohiruneTotalMinutes)}</div>
-            <div>合計：{formatMinutes(totalMinutes)}</div>
+        <div className="border-t border-slate-200 pt-4">
+            <p className="text-sm text-slate-500">合計</p>
+            <p className="text-sm text-slate-500">夜の睡眠：{formatMinutes(nightTotalMinutes)}</p>
+            <p className="text-sm text-slate-500">お昼寝：{formatMinutes(ohiruneTotalMinutes)}</p>
+            <p className="text-sm text-slate-500">合計：{formatMinutes(totalMinutes)}</p>
         </div>
     );
 }
