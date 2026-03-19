@@ -3,7 +3,7 @@ import SleepList from "@/app/sleep/_components/sleep-list";
 import { supabase } from "@/lib/supabase";
 import { SleepRecord } from "@/types/sleep";
 
-export default async function SleepPage() {
+export default async function SleepLogPage() {
   const { data, error } = await supabase
     .from("sleep_records")
     .select("*")
@@ -15,7 +15,6 @@ export default async function SleepPage() {
 
   const sleepLogs: SleepRecord[] = (data ?? []).map((row) => ({
     id: row.id,
-    date: row.date,
     bedTime: row.bed_time,
     wakeUpTime: row.wake_up_time,
     type: row.type,
@@ -24,18 +23,8 @@ export default async function SleepPage() {
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8">
       <div className="mx-auto max-w-2xl space-y-6">
-        <header className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-slate-800 sm:text-4xl">
-            Sleep Log
-          </h1>
-          <p className="text-sm text-slate-500 sm:text-base">
-            日々の睡眠をかんたんに記録しましょう📝
-          </p>
-        </header>
         <SleepForm />
-        <div className="grid gap-6">
-          <SleepList sleepLogs={sleepLogs} />
-        </div>
+        <SleepList sleepLogs={sleepLogs} />
       </div>
     </main>
   )
