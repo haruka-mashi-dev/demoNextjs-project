@@ -5,7 +5,7 @@
 このリポジトリは、**ClaudeCodeを使いながら、要件定義 → 基本設計 → 詳細設計 → 単体テスト** の流れを体験するためのハンズオン用プロジェクトです。
 
 題材は、学習しやすいように機能を絞った **簡単な育児記録アプリ** です。
-まずは **睡眠記録機能** のみを対象にして、実務でよくある開発工程を小さく一周することを目的にしています。
+まずは**認証・睡眠記録**のみを対象にして、実務でよくある開発工程を小さく一周することを目的にしています。
 
 ---
 
@@ -27,7 +27,7 @@
 
 娘の成長を記録するアプリ。
 睡眠・食事・通院やお薬の投与記録・育児日記を管理する。
-今回は学習の目的として初回は睡眠機能のみ開発を行う。
+今回は学習の目的として初回は認証・睡眠機能のみ開発を行う。
 
 ### 機能概要
 
@@ -41,23 +41,13 @@
 
 - 睡眠記録
   1日の就寝時間、起床時間をお昼寝時間を記録する。
-  記録した結果は日付ごとの、お昼寝時間、夜の睡眠時間それぞれの合計時間と
-  1日の合計睡眠時間を表示する。
-  表示は１週間分のみ表示し、１週間より前の情報はページをつけて表示する。
-  睡眠記録の削除
-  記録した内容の削除が可能。ゴミ箱ボタンを押すと記録した日付の睡眠記録が削除される。
-  合計睡眠時間の表示
-
-### 入力項目
-
-- 日付
-- 種別（夜寝 / 昼寝）
-- 就寝時間
-- 起床時間
 
 ### 今回やらないこと
 
----
+- 食事記録機能
+- 通院・お薬投与記録機能
+- 日記記録機能
+- 月別集計・グラフ表示
 
 ## 想定技術スタック
 
@@ -65,7 +55,8 @@
 - TypeScript
 - Tailwind CSS
 - shadcn/ui
-- Vitest（単体テスト）
+- Jest（単体テスト）
+- Supabase
 
 ---
 
@@ -116,7 +107,7 @@
 
 ```text
 簡単な育児記録アプリの要件定義書のたたき台を作ってください。
-対象は「睡眠記録機能のみ」です。
+対象は認証・睡眠記録機能です。
 以下を含めてください。
 - 背景
 - 目的
@@ -171,7 +162,6 @@
 - コンポーネント構成
 - データ項目設計
 - 状態管理方法
-- localStorage保存方針
 - 画面遷移
 TypeScriptの型案も含めてください。
 ```
@@ -204,7 +194,7 @@ TypeScriptの型案も含めてください。
 - State設計
 - 関数一覧
 - バリデーション仕様
-- localStorage連携タイミング
+- supabase連携タイミング
 
 ### ClaudeCodeへの依頼例
 
@@ -221,7 +211,7 @@ TypeScriptの型案も含めてください。
 - イベント処理
 - バリデーション
 - 睡眠時間計算ロジック
-- localStorageとの連携タイミング
+- supabaseとの連携タイミング
 TypeScriptで書ける粒度でお願いします。
 ```
 
@@ -241,7 +231,7 @@ TypeScriptで書ける粒度でお願いします。
 4. 一覧表示
 5. 削除機能
 6. 合計表示
-7. localStorage保存
+7. supabase保存
 8. バリデーション
 
 ### ClaudeCodeへの依頼例（型定義）
@@ -396,12 +386,94 @@ Vitestを前提に、
 
 - 食事記録機能の追加
 - 日記機能の追加
-- Supabase連携
-- ログイン機能
 - 月別集計
 - グラフ表示
 
 まずは **睡眠記録だけで開発工程を一通り経験すること** を優先してください。
+
+---
+
+## ベストプラクティス
+
+### Next.js (App Router)
+
+#### Server Component / Client Component の使い分け
+
+| やること | どちらを使う |
+|---|---|
+| DBやAPIからデータ取得 | Server Component |
+| useState / useEffect を使う | Client Component |
+| イベントハンドラ（onClick等）を使う | Client Component |
+| SEOに関わる静的コンテンツ | Server Component |
+
+- `"use client"` は必要な箇所だけに絞る（ツリーの末端に配置するのが理想）
+- データフェッチはページの Server Component で行い、props として Client Component に渡す
+
+#### Server Actions
+
+- フォームのミューテーション（登録・更新・削除）は Server Actions (`"use server"`) で行う
+- 処理後は `revalidatePath()` でキャッシュを破棄してページを最新化する
+- ファイルは `_actions/` ディレクトリにまとめてルートに共存させる
+
+```ts
+// 例: src/app/sleep/_actions/create-sleep.ts
+"use server";
+import { revalidatePath } from "next/cache";
+
+export async function createSleep(...) {
+  await supabase.from("sleep_records").insert({...});
+  revalidatePath("/sleep");
+}
+```
+
+#### バリデーション
+
+- Zod スキーマをフォーム側と Server Action 側の両方から参照できるよう `_schema.ts` に切り出す
+- クライアントでは `safeParse()` でエラーメッセージを取得してUIに表示する
+
+---
+
+### Supabase
+
+#### クライアントの初期化
+
+- クライアントは `src/lib/supabase.ts` に一箇所だけ定義してアプリ全体で使い回す
+- ブラウザ・サーバー両方からアクセスするなら `NEXT_PUBLIC_` プレフィックスの環境変数を使う
+
+```ts
+// src/lib/supabase.ts
+import { createClient } from "@supabase/supabase-js";
+export const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+```
+
+#### テーブル設計の慣習
+
+- Supabase のカラム名は **snake_case**、TypeScript の型は **camelCase** で管理する
+- フェッチ後にマッピング処理を入れてコードの一貫性を保つ
+
+```ts
+const records = (data ?? []).map((row) => ({
+  id: row.id,
+  bedTime: row.bed_time,       // snake_case → camelCase
+  wakeUpTime: row.wake_up_time,
+}));
+```
+
+#### エラーハンドリング
+
+- `supabase.from(...).select()` の戻り値は `{ data, error }` で受け取り、必ず `error` を確認する
+- Server Component ではエラー時にフォールバック値（空配列など）を使って画面を壊さないようにする
+
+```ts
+const { data, error } = await supabase.from("sleep_records").select("*");
+if (error) {
+  console.error("データ取得に失敗しました:", error.message);
+}
+const records = data ?? [];
+```
 
 ---
 
