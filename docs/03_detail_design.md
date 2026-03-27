@@ -387,7 +387,7 @@ export async function logoutAction() {
 
 ## 4. 睡眠記録機能
 
-### 2-1. SleepPage（page.tsx）
+### 4-1. SleepPage（page.tsx）
 
 #### コンポーネント概要
 
@@ -395,7 +395,7 @@ export async function logoutAction() {
 |------|------|
 | ファイルパス | `app/(app)/sleep/page.tsx` |
 | 種別 | Server Component |
-| 責務 | SearchParamsからページ番号を取得、日付範囲を計算、Supabaseからデータ取得、子コンポーネントへpropsを渡す |
+| 責務 | SearchParams からページ番号を取得し、SleepContainer に渡す（ルート定義のみ） |
 
 #### SearchParams
 
@@ -408,38 +408,142 @@ export async function logoutAction() {
 ```
 1. searchParams.page を取得（なければ1）
       ↓
-2. ページ番号から日付範囲を計算
-   page=1 → 今日 〜 5日前
-   page=2 → 6日前 〜 10日前
-   page=N → (N-1)*5日前 〜 N*5日前
-      ↓
-3. Supabaseからその日付範囲の sleep_records を取得
-   （user_idが一致するレコードのみ・date降順）
-      ↓
-4. hasNextPage の判定
-   → N*5日前より前のデータが1件以上存在するか確認
-      ↓
-5. SleepList・SleepPaginationにpropsを渡す
-```
-
-#### 日付範囲計算ロジック
-
-```typescript
-const today = new Date()
-const endDate = subDays(today, (page - 1) * 5)      // 例: page=1 → 今日
-const startDate = subDays(today, page * 5)            // 例: page=1 → 5日前
-
-// hasNextPage: startDateより前のデータが存在するか
-const { count } = await supabase
-  .from("sleep_records")
-  .select("*", { count: "exact", head: true })
-  .eq("user_id", userId)
-  .lt("date", format(startDate, "yyyy-MM-dd"))
+2. SleepContainer に page を渡して描画
 ```
 
 ---
 
-### 2-2. SleepList
+### 4-2. fetcher（サーバー専用データ取得）
+
+#### ファイルパス
+
+`app/(app)/sleep/_lib/fetcher.ts`
+
+#### 概要
+
+Supabase へのクエリ関数を集約する。先頭に `import "server-only"` を記述することで、Client Component からのインポートをビルドエラーとして検出する。
+
+```typescript
+import "server-only"  // Client Component からのインポートでビルドエラーになる
+```
+
+#### 関数一覧
+
+| 関数名 | 引数 | 戻り値 | 説明 |
+|--------|------|--------|------|
+| `fetchSleepLogs` | `page: number` | `SleepRecord[]` | 指定ページの睡眠記録を取得 |
+| `fetchHasNextPage` | `page: number` | `boolean` | 次ページのデータが存在するか確認 |
+
+#### 日付範囲計算ロジック
+
+```typescript
+const PAGE_SIZE = 5
+const today = new Date()
+const endDate = new Date(today)
+endDate.setDate(today.getDate() - (page - 1) * PAGE_SIZE)
+const startDate = new Date(today)
+startDate.setDate(today.getDate() - page * PAGE_SIZE + 1)
+
+// hasNextPage: startDate の前日以前のデータが存在するか
+const prevDate = new Date(startDate)
+prevDate.setDate(startDate.getDate() - 1)
+const { count } = await supabase
+  .from("sleep_records")
+  .select("*", { count: "exact", head: true })
+  .eq("user_id", userId)
+  .lte("date", toDateStr(prevDate))
+```
+
+---
+
+### 4-3. SleepContainer
+
+#### コンポーネント概要
+
+| 項目 | 内容 |
+|------|------|
+| ファイルパス | `app/(app)/sleep/_components/sleep-container.tsx` |
+| 種別 | Server Component |
+| 責務 | fetcher を呼び出してデータを取得し、子コンポーネントへ props を渡す |
+
+#### Props
+
+```typescript
+type Props = {
+  page: number
+}
+```
+
+#### 処理フロー
+
+```
+1. fetchSleepLogs(page) と fetchHasNextPage(page) を並列実行（Promise.all）
+      ↓
+2. SleepForm・SleepList・SleepPagination に props を渡す
+```
+
+---
+
+### 4-4. SleepForm
+
+#### コンポーネント概要
+
+| 項目 | 内容 |
+|------|------|
+| ファイルパス | `app/(app)/sleep/_components/sleep-form.tsx` |
+| 種別 | Client Component |
+| 責務 | 日付・種別・就寝/起床時間の入力、conform + Server Action で保存 |
+
+#### フォーム管理（conform）
+
+```typescript
+const [lastResult, action, isPending] = useActionState(createSleep, undefined)
+
+const [form, fields] = useForm({
+  lastResult,
+  onValidate({ formData }) {
+    return parseWithZod(formData, { schema: sleepSchema })
+  },
+  shouldValidate: "onBlur",
+  shouldRevalidate: "onInput",
+})
+```
+
+| 概念 | 役割 |
+|------|------|
+| `lastResult` | Server Action の戻り値（`submission.reply()`）を受け取る |
+| `fields.xxx.errors` | フィールドごとのバリデーションエラー |
+| `getInputProps(fields.xxx)` | `name` / `id` などを自動生成して input に渡す |
+| `noValidate` | ブラウザ標準バリデーションを無効化（conform が代替） |
+
+---
+
+### 4-5. createSleepAction（Server Action）
+
+#### ファイルパス
+
+`app/(app)/sleep/_actions/create-sleep.ts`
+
+#### 処理フロー
+
+```
+1. parseWithZod(formData, { schema }) でバリデーション
+      ↓ 失敗 → submission.reply() でエラーを返す（conform がエラー表示に使う）
+      ↓ 成功
+2. Supabase に sleep_records を insert
+      ↓ 失敗 → submission.reply({ formErrors: ["保存に失敗..."] })
+      ↓ 成功
+3. revalidatePath("/sleep")
+4. submission.reply({ resetForm: true }) でフォームをリセット
+```
+
+#### 戻り値
+
+`submission.reply()` を返す。conform の `useForm({ lastResult })` がエラー表示に使用する。
+
+---
+
+### 4-6. SleepList
 
 #### コンポーネント概要
 
@@ -480,7 +584,7 @@ const grouped = records.reduce((acc, record) => {
 
 ---
 
-### 2-3. SleepListItem
+### 4-7. SleepListItem
 
 #### コンポーネント概要
 
@@ -514,7 +618,7 @@ type SleepListItemProps = {
 
 ---
 
-### 2-4. SleepSummary
+### 4-8. SleepSummary
 
 #### コンポーネント概要
 
@@ -555,7 +659,7 @@ const totalNightMinutes = records
 
 ---
 
-### 2-5. SleepPagination
+### 4-9. SleepPagination
 
 #### コンポーネント概要
 

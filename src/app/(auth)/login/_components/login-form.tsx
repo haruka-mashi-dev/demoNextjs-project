@@ -1,7 +1,10 @@
 "use client"
 
 import { useState, useActionState } from "react"
+import { useForm, getInputProps } from "@conform-to/react"
+import { parseWithZod } from "@conform-to/zod/v4"
 import { loginAction } from "../_actions/login"
+import { loginSchema } from "../_schema"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -9,8 +12,17 @@ import { Button } from "@/components/ui/button"
 import { Eye, EyeOff } from "lucide-react"
 
 export default function LoginForm() {
-  const [state, action, isPending] = useActionState(loginAction, null)
+  const [lastResult, action, isPending] = useActionState(loginAction, undefined)
   const [showPassword, setShowPassword] = useState(false)
+
+  const [form, fields] = useForm({
+    lastResult,
+    onValidate({ formData }) {
+      return parseWithZod(formData, { schema: loginSchema })
+    },
+    shouldValidate: "onBlur",
+    shouldRevalidate: "onInput",
+  })
 
   return (
     <Card className="w-full max-w-md rounded-3xl border border-slate-200 bg-white shadow-md">
@@ -18,37 +30,35 @@ export default function LoginForm() {
         <CardTitle className="text-xl font-bold text-slate-600">ログイン</CardTitle>
       </CardHeader>
       <CardContent className="space-y-5 pt-6">
-        {state?.errorMessage && (
-          <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
-            {state.errorMessage}
-          </p>
-        )}
+        <form id={form.id} onSubmit={form.onSubmit} action={action} noValidate className="space-y-4">
 
-        <form action={action} className="space-y-4">
+          {/* 認証エラー・メール未確認など全体エラー */}
+          {form.errors && (
+            <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+              {form.errors[0]}
+            </p>
+          )}
+
           <div className="space-y-2">
-            <Label htmlFor="email">メールアドレス</Label>
-            {state?.fieldErrors?.email?.map((msg) => (
-              <p key={msg} className="text-sm text-red-500">{msg}</p>
-            ))}
+            <Label htmlFor={fields.email.id}>メールアドレス</Label>
+            {fields.email.errors && (
+              <p className="text-sm text-red-500">{fields.email.errors[0]}</p>
+            )}
             <Input
-              id="email"
-              name="email"
-              type="email"
+              {...getInputProps(fields.email, { type: "email" })}
               autoComplete="email"
               className="h-11 rounded-xl"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">パスワード</Label>
-            {state?.fieldErrors?.password?.map((msg) => (
-              <p key={msg} className="text-sm text-red-500">{msg}</p>
-            ))}
+            <Label htmlFor={fields.password.id}>パスワード</Label>
+            {fields.password.errors && (
+              <p className="text-sm text-red-500">{fields.password.errors[0]}</p>
+            )}
             <div className="relative">
               <Input
-                id="password"
-                name="password"
-                type={showPassword ? "text" : "password"}
+                {...getInputProps(fields.password, { type: showPassword ? "text" : "password" })}
                 autoComplete="current-password"
                 className="h-11 rounded-xl pr-10"
               />

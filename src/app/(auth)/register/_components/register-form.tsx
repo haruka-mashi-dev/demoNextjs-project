@@ -2,8 +2,10 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useForm, getInputProps } from "@conform-to/react"
+import { parseWithZod } from "@conform-to/zod/v4"
 import { registerSchema } from "../_schema"
-import type { RegisterFormValues, RegisterFieldErrors } from "@/types/user"
+import type { RegisterFormValues } from "@/types/user"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -24,32 +26,33 @@ const defaultForm: RegisterFormValues = {
 
 export default function RegisterForm() {
   const router = useRouter()
-  const [errors, setErrors] = useState<RegisterFieldErrors | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   // マウント時に sessionStorage から復元（確認画面から戻ったとき）
-  const [form, setForm] = useState<RegisterFormValues>(() => {
+  const [formState, setFormState] = useState<RegisterFormValues>(() => {
     if (typeof window === "undefined") return defaultForm
     const saved = sessionStorage.getItem(SESSION_KEY)
     return saved ? (JSON.parse(saved) as RegisterFormValues) : defaultForm
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const result = registerSchema.safeParse(form)
-    if (!result.success) {
-      setErrors(result.error.flatten().fieldErrors as RegisterFieldErrors)
-      return
-    }
-    setErrors(null)
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(form))
-    router.push("/register/confirm")
-  }
-
-  const field = (name: keyof RegisterFormValues) => ({
-    value: form[name],
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-      setForm((prev) => ({ ...prev, [name]: e.target.value })),
+  const [form, fields] = useForm({
+    onValidate({ formData }) {
+      return parseWithZod(formData, { schema: registerSchema })
+    },
+    onSubmit(event, { submission }) {
+      event.preventDefault()
+      // バリデーション失敗時は conform がエラーを表示するので何もしない
+      if (!submission || submission.status !== "success") return
+      // 成功時: sessionStorage に保存して確認画面へ
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(formState))
+      router.push("/register/confirm")
+    },
+    shouldValidate: "onBlur",
+    shouldRevalidate: "onInput",
   })
+
+  const handleChange = (name: keyof RegisterFormValues) =>
+    (e: React.ChangeEvent<HTMLInputElement>) =>
+      setFormState((prev) => ({ ...prev, [name]: e.target.value }))
 
   return (
     <Card className="w-full max-w-md rounded-3xl border border-slate-200 bg-white shadow-md">
@@ -58,26 +61,36 @@ export default function RegisterForm() {
         <p className="text-sm text-slate-500">必要な情報を入力してください</p>
       </CardHeader>
       <CardContent className="space-y-5 pt-6">
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form id={form.id} onSubmit={form.onSubmit} noValidate className="space-y-4">
 
           {/* メールアドレス */}
           <div className="space-y-1">
-            <Label htmlFor="email">メールアドレス</Label>
-            {errors?.email?.map((msg) => <p key={msg} className="text-sm text-red-500">{msg}</p>)}
-            <Input id="email" type="email" autoComplete="email" className="h-11 rounded-xl" {...field("email")} />
+            <Label htmlFor={fields.email.id}>メールアドレス</Label>
+            {fields.email.errors && (
+              <p className="text-sm text-red-500">{fields.email.errors[0]}</p>
+            )}
+            <Input
+              {...getInputProps(fields.email, { type: "email" })}
+              value={formState.email}
+              onChange={handleChange("email")}
+              autoComplete="email"
+              className="h-11 rounded-xl"
+            />
           </div>
 
           {/* パスワード */}
           <div className="space-y-1">
-            <Label htmlFor="password">パスワード</Label>
-            {errors?.password?.map((msg) => <p key={msg} className="text-sm text-red-500">{msg}</p>)}
+            <Label htmlFor={fields.password.id}>パスワード</Label>
+            {fields.password.errors && (
+              <p className="text-sm text-red-500">{fields.password.errors[0]}</p>
+            )}
             <div className="relative">
               <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
+                {...getInputProps(fields.password, { type: showPassword ? "text" : "password" })}
+                value={formState.password}
+                onChange={handleChange("password")}
                 autoComplete="new-password"
                 className="h-11 rounded-xl pr-10"
-                {...field("password")}
               />
               <button
                 type="button"
@@ -94,12 +107,28 @@ export default function RegisterForm() {
             <Label>保護者情報</Label>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                {errors?.lastName?.map((msg) => <p key={msg} className="text-sm text-red-500">{msg}</p>)}
-                <Input placeholder="名字" className="h-11 rounded-xl" {...field("lastName")} />
+                {fields.lastName.errors && (
+                  <p className="text-sm text-red-500">{fields.lastName.errors[0]}</p>
+                )}
+                <Input
+                  {...getInputProps(fields.lastName, { type: "text" })}
+                  value={formState.lastName}
+                  onChange={handleChange("lastName")}
+                  placeholder="名字"
+                  className="h-11 rounded-xl"
+                />
               </div>
               <div>
-                {errors?.firstName?.map((msg) => <p key={msg} className="text-sm text-red-500">{msg}</p>)}
-                <Input placeholder="名前" className="h-11 rounded-xl" {...field("firstName")} />
+                {fields.firstName.errors && (
+                  <p className="text-sm text-red-500">{fields.firstName.errors[0]}</p>
+                )}
+                <Input
+                  {...getInputProps(fields.firstName, { type: "text" })}
+                  value={formState.firstName}
+                  onChange={handleChange("firstName")}
+                  placeholder="名前"
+                  className="h-11 rounded-xl"
+                />
               </div>
             </div>
           </div>
@@ -108,24 +137,43 @@ export default function RegisterForm() {
           <div className="space-y-2">
             <Label>お子様情報</Label>
             <div>
-              {errors?.childName?.map((msg) => <p key={msg} className="text-sm text-red-500">{msg}</p>)}
-              <Input placeholder="お子様の名前" className="h-11 rounded-xl" {...field("childName")} />
+              {fields.childName.errors && (
+                <p className="text-sm text-red-500">{fields.childName.errors[0]}</p>
+              )}
+              <Input
+                {...getInputProps(fields.childName, { type: "text" })}
+                value={formState.childName}
+                onChange={handleChange("childName")}
+                placeholder="お子様の名前"
+                className="h-11 rounded-xl"
+              />
             </div>
             <div>
-              {errors?.childNickname?.map((msg) => <p key={msg} className="text-sm text-red-500">{msg}</p>)}
-              <Input placeholder="お子様のニックネーム" className="h-11 rounded-xl" {...field("childNickname")} />
+              {fields.childNickname.errors && (
+                <p className="text-sm text-red-500">{fields.childNickname.errors[0]}</p>
+              )}
+              <Input
+                {...getInputProps(fields.childNickname, { type: "text" })}
+                value={formState.childNickname}
+                onChange={handleChange("childNickname")}
+                placeholder="お子様のニックネーム"
+                className="h-11 rounded-xl"
+              />
             </div>
+            {/* ラジオボタンは getInputProps が対応しないため name のみ conform から取得 */}
             <div>
-              {errors?.childGender?.map((msg) => <p key={msg} className="text-sm text-red-500">{msg}</p>)}
+              {fields.childGender.errors && (
+                <p className="text-sm text-red-500">{fields.childGender.errors[0]}</p>
+              )}
               <div className="flex gap-3 pt-1">
                 {(["girl", "boy"] as const).map((g) => (
                   <label key={g} className="flex cursor-pointer items-center gap-2">
                     <input
                       type="radio"
-                      name="childGender"
+                      name={fields.childGender.name}
                       value={g}
-                      checked={form.childGender === g}
-                      onChange={() => setForm((prev) => ({ ...prev, childGender: g }))}
+                      checked={formState.childGender === g}
+                      onChange={() => setFormState((prev) => ({ ...prev, childGender: g }))}
                     />
                     <span className="text-sm">{g === "girl" ? "女の子" : "男の子"}</span>
                   </label>

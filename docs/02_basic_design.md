@@ -127,51 +127,61 @@ src/
 ├── app/
 │   ├── (auth)/
 │   │   ├── login/
-│   │   │   └── page.tsx
+│   │   │   ├── page.tsx
+│   │   │   ├── _schema.ts
+│   │   │   ├── _actions/
+│   │   │   │   └── login.ts
+│   │   │   └── _components/
+│   │   │       └── login-form.tsx
 │   │   └── register/
 │   │       ├── page.tsx
+│   │       ├── _schema.ts
+│   │       ├── _actions/
+│   │       │   └── register.ts
+│   │       ├── _components/
+│   │       │   └── register-form.tsx
 │   │       ├── confirm/
 │   │       │   └── page.tsx
 │   │       └── complete/
 │   │           └── page.tsx
 │   ├── (app)/
-│   │   ├── layout.tsx          # 認証チェック共通レイアウト
+│   │   ├── layout.tsx              # 認証チェック共通レイアウト
+│   │   ├── _actions/
+│   │   │   └── logout.ts           # ログアウトアクション
 │   │   ├── _components/
-│   │   │   └── app-header.tsx  # 共通ヘッダー
-│   │   ├── page.tsx            # メニューTOP
+│   │   │   └── app-header.tsx      # 共通ヘッダー
+│   │   ├── page.tsx                # メニューTOP
 │   │   └── sleep/
-│   │       └── page.tsx
+│   │       ├── page.tsx            # ルート定義のみ
+│   │       ├── _schema.ts          # Zodスキーマ
+│   │       ├── _actions/
+│   │       │   ├── create-sleep.ts
+│   │       │   └── delete-sleep.ts
+│   │       ├── _lib/
+│   │       │   └── fetcher.ts          # Supabaseクエリ関数（server-only）
+│   │       └── _components/
+│   │           ├── sleep-container.tsx  # fetcherを呼び出し子コンポーネントへ渡す
+│   │           ├── sleep-form.tsx
+│   │           ├── sleep-list.tsx
+│   │           ├── sleep-list-item.tsx
+│   │           ├── sleep-summary.tsx
+│   │           └── sleep-pagination.tsx
 │   └── layout.tsx
 │
 ├── components/
-│   ├── auth/
-│   │   ├── LoginForm.tsx       # ログインフォーム
-│   │   └── RegisterForm.tsx    # 新規登録フォーム
-│   ├── sleep/
-│   │   ├── SleepForm.tsx       # 睡眠記録入力フォーム
-│   │   ├── SleepList.tsx       # 睡眠記録一覧（日付グループ）
-│   │   ├── SleepListItem.tsx   # 睡眠記録1件
-│   │   ├── SleepSummary.tsx    # 日付ごとの合計表示
-│   │   └── SleepPagination.tsx # ページネーション
-│   ├── menu/
-│   │   └── MenuCard.tsx        # TOPメニューカード
 │   └── ui/                     # shadcn/ui コンポーネント置き場
 │
-├── hooks/
-│   ├── useAuth.ts              # 認証状態管理
-│   └── useSleep.ts             # 睡眠記録CRUD
-│
 ├── lib/
-│   ├── supabase/
-│   │   ├── client.ts           # Supabaseクライアント
-│   │   └── auth.ts             # 認証ヘルパー関数
-│   └── utils/
-│       ├── calculateSleepMinutes.ts  # 睡眠時間計算
-│       └── validateSleepRecord.ts   # バリデーション
+│   └── supabase/
+│       ├── client.ts           # ブラウザ用Supabaseクライアント
+│       └── server.ts           # サーバー用Supabaseクライアント
 │
-└── types/
-    ├── sleep.ts                # 睡眠記録の型定義
-    └── user.ts                 # ユーザの型定義
+├── types/
+│   ├── sleep.ts                # 睡眠記録の型定義
+│   └── user.ts                 # ユーザの型定義
+│
+└── utils/
+    └── sleep.ts                # calculateSleepMinutes・formatMinutes
 ```
 
 ### 各コンポーネントの責務
@@ -179,14 +189,14 @@ src/
 | コンポーネント | 責務 |
 |---|---|
 | `AppHeader` | ページタイトル・メニューTOPへの戻るボタン・ログアウトボタンを表示 |
-| `LoginForm` | メール・パスワード入力、Supabase認証呼び出し |
-| `RegisterForm` | ユーザ情報入力、一時保存 |
-| `SleepForm` | 日付・種別・就寝/起床時間の入力、Supabase保存 |
+| `LoginForm` | メール・パスワード入力、conform + Server Action で認証呼び出し |
+| `RegisterForm` | ユーザ情報入力、sessionStorage に一時保存して確認画面へ遷移 |
+| `SleepContainer` | Supabaseからの睡眠記録取得・ページネーション判定（Server Component） |
+| `SleepForm` | 日付・種別・就寝/起床時間の入力、conform + Server Action で保存 |
 | `SleepList` | 日付ごとにグループ化して記録を表示 |
 | `SleepListItem` | 1件の記録表示と削除ボタン |
 | `SleepSummary` | 日付ごとの合計睡眠時間計算・表示 |
 | `SleepPagination` | 5日以前のページ切り替え |
-| `MenuCard` | TOPメニューの各カード（active/disabled制御） |
 
 ---
 

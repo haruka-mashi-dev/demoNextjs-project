@@ -25,7 +25,7 @@
 
 育児記録アプリ
 
-娘の成長を記録するアプリ。
+子供の成長を記録するアプリ。
 睡眠・食事・通院やお薬の投与記録・育児日記を管理する。
 今回は学習の目的として初回は認証・睡眠機能のみ開発を行う。
 
@@ -51,12 +51,43 @@
 
 ## 想定技術スタック
 
-- Next.js
-- TypeScript
-- Tailwind CSS
-- shadcn/ui
-- Jest（単体テスト）
-- Supabase
+1. ライブラリ一覧
+
+**フレームワーク・コアライブラリ**
+
+| ライブラリ | バージョン | 用途 |
+|---|---|---|
+| Next.js | 16.x | React フレームワーク。App Router によるファイルベースルーティング、Server Component、Server Action を提供する |
+| React | 19.x | UI コンポーネントライブラリ。`useActionState` など最新の React API を使用する |
+
+**フォーム・バリデーション**
+
+| ライブラリ | バージョン | 用途 |
+|---|---|---|
+| Zod | 4.x | スキーマ定義とバリデーション。サーバー・クライアント両側で共有する |
+| @conform-to/react | 1.x | `useActionState` と連携するフォーム状態管理。フィールドの ID・名前・エラーを管理する |
+| @conform-to/zod | 1.x | conform と Zod を連携させるアダプター。`parseWithZod()` でフォームデータをパースする |
+
+**UI・スタイリング**
+
+| ライブラリ | バージョン | 用途 |
+|---|---|---|
+| Tailwind CSS | 4.x | ユーティリティファーストの CSS フレームワーク |
+| shadcn/ui | 3.x | Tailwind CSS ベースのコンポーネント集。`npx shadcn add` で `components/ui/` に追加し、直接編集してカスタマイズする |
+| Lucide React | 0.5x | SVG アイコンライブラリ |
+
+**サーバーサイド**
+| ライブラリ | バージョン | 用途 |
+|---|---|---|
+|server-only | 0.0.1 | import "server-only" を記述したファイルを Client Component から import するとビルドエラーにする。fetcher.ts などの誤用を防ぐ |
+
+**テスト**
+| ライブラリ | バージョン | 用途 |
+|---|---|---|
+|Jest | 29.x | JavaScript テストフレームワーク |
+|@testing-library/react | 16.x | React コンポーネントのレンダリングとクエリを提供するテストユーティリティ |
+|@testing-library/user-event | 14.x | クリック・入力などのユーザー操作をシミュレートするユーティリティ |
+|@testing-library/jest-dom | 6.x | toBeInTheDocument() などの DOM 検証用カスタムマッチャーを提供する |
 
 ---
 
