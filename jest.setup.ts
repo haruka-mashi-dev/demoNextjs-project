@@ -11,4 +11,6 @@
 //   expect(input).toHaveValue("abc")     // input の値が "abc" か
 // ─────────────────────────────────────────────────────────────────────────────
 
+// @testing-library/jest-dom のカスタムマッチャーをグローバルに登録する
+// → toBeInTheDocument(), toBeDisabled(), toHaveValue() など
 import "@testing-library/jest-dom";

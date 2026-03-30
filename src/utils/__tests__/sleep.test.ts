@@ -1,4 +1,3 @@
-import { describe, it, expect } from "@jest/globals";
 import { calcSleepMinutes, formatMinutes} from "../sleep";
 
 describe("calcSleepMinutes", () => {
