@@ -6,6 +6,9 @@
 |---|---|
 | `src/utils/sleep.ts` | `calcSleepMinutes`, `formatMinutes` |
 | `src/app/(app)/sleep/_schema.ts` | `sleepSchema` |
+| `src/app/(app)/sleep/_components/sleep-list.tsx` | `SleepList` |
+| `src/app/(app)/sleep/_components/sleep-pagination.tsx` | `SleepPagination` |
+
 
 ## テストフレームワーク
 
@@ -100,10 +103,40 @@ npm run test:watch
 
 ---
 
-## 実行結果
+### `SleepList`
 
-```
-Test Suites: 2 passed, 2 total
-Tests:       14 passed, 14 total
-Time:        0.593 s
-```
+睡眠記録一覧を表示するコンポーネント。`sleepLogs` を props で受け取り、日付ごとにグループ化して表示する。
+
+**テストファイル：** `src/app/(app)/sleep/_components/__tests__/sleep-list.test.tsx`
+
+**モック：** `deleteSleep`（Server Action）を `jest.fn()` で差し替え
+
+| # | ケース | 入力 | 確認内容 |
+|---|---|---|---|
+| 1 | データが空のとき | `sleepLogs: []` | "記録がありません" が表示される |
+| 2 | 夜の睡眠 1 件のとき | `type: "night"` 1件 | 日付・時刻・夜の合計・お昼寝 0時間0分 が表示される |
+| 3 | 夜の睡眠・お昼寝 1 件ずつのとき | `type: "night"` + `type: "ohirune"` 各1件 | 両方の時刻・種別小計・合計が正しく表示される |
+| 4 | 複数日のデータがあるとき | 異なる日付 2 件 | 新しい日付が先に表示される（降順ソート） |
+
+---
+
+---
+
+### `SleepPagination`
+
+ページネーションコンポーネント。`currentPage` と `hasNextPage` の組み合わせでボタンの表示を切り替える。
+
+**テストファイル：** `src/app/(app)/sleep/_components/__tests__/sleep-pagination.test.tsx`
+
+**モック：** `useRouter`（`next/navigation`）を `jest.fn()` で差し替え
+
+| # | ケース | `currentPage` | `hasNextPage` | 確認内容 |
+|---|---|---|---|---|
+| 1 | ボタンなし | `1` | `false` | 両ボタンとも表示されない |
+| 2 | 新しいのみ | `2` | `false` | ＜＜（新しい）のみ表示される |
+| 3 | 古いのみ | `1` | `true` | ＞＞（古い）のみ表示される |
+| 4 | 両方 | `2` | `true` | 両ボタンとも表示される |
+
+
+---
+
