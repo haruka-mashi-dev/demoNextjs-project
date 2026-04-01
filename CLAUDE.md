@@ -1,6 +1,46 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## 概要
+
+育児記録アプリ（Next.js App Router）の学習プロジェクト。
+詳細なルールは `.claude/rules/` 配下を参照。
+
+| ファイル | 内容 |
+|---|---|
+| `.claude/rules/architecture.md` | DDD設計方針・ディレクトリ構成 |
+| `.claude/rules/coding-style.md` | 命名規則・コミットメッセージルール |
+| `.claude/rules/testing.md` | テスト配置ルール・モック方針・カバレッジ |
+
+---
+
+## 開発環境
+
+### 必須バージョン
+
+| ツール | バージョン |
+|---|---|
+| Node.js | v24.11.1 |
+| npm | 11.6.2 |
+
+> パッケージマネージャーは **npm** を使用する（yarn / pnpm は使わない）。
+
+### ローカル環境の設定
+
+| 項目 | 値 |
+|---|---|
+| 開発サーバーURL | `http://localhost:3000` |
+| Supabase ローカルURL | `http://localhost:54321` |
+
+### 環境変数ファイル
+
+| ファイル | 用途 | Git管理 |
+|---|---|---|
+| `.env.local` | 本番Supabaseの接続情報（ローカル開発用） | 対象外（.gitignore） |
+| `.env.test` | テスト用ダミー値（実Supabaseに接続しない） | 対象 |
+
+> `.env.local` には `NEXT_PUBLIC_SUPABASE_URL` と `NEXT_PUBLIC_SUPABASE_ANON_KEY` を設定する。実際の値は Supabase ダッシュボードで確認すること。
+
+---
 
 ## Commands
 
@@ -16,39 +56,64 @@ npx jest path/to/file.test.ts     # Run a single test file
 npx jest --watch                  # Watch mode
 ```
 
-## Architecture
+---
 
-This is a **Next.js 16 App Router** project with TypeScript — a hands-on learning project for a baby care recording app (育児記録アプリ). Currently only the sleep recording feature is implemented.
+## 技術スタック
 
-**Tech stack:** Next.js · TypeScript · Tailwind CSS v4 · shadcn/ui · Zod · Supabase · Jest
+**フレームワーク・言語**
 
-### Data flow
+| ライブラリ | バージョン | 用途 |
+|---|---|---|
+| Next.js | 16.1.6 | App Router / Server Components / Server Actions |
+| React | 19.2.3 | UI |
+| TypeScript | ^5 | 型安全 |
 
-Pages are **Server Components** that fetch directly from Supabase, then pass data down to Client Components. Mutations use **Next.js Server Actions** (`"use server"`) which call Supabase and then `revalidatePath()` to refresh data.
+**スタイリング**
 
-```
-src/app/sleep/page.tsx          ← Server Component: fetches sleep_records from Supabase
-  └─ _components/sleep-form.tsx ← Client Component: calls Server Action on submit
-  └─ _components/sleep-list.tsx ← Client Component: displays records
-src/app/sleep/_actions/         ← Server Actions (create-sleep.ts, delete-sleep.ts)
-src/app/sleep/_schema.ts        ← Zod validation schemas shared between form + actions
-```
+| ライブラリ | バージョン | 用途 |
+|---|---|---|
+| Tailwind CSS | ^4 | ユーティリティCSS |
+| shadcn/ui | ^4.0.8 | UIコンポーネント集 |
+| Radix UI | ^1.4.3 | shadcn のベース（アクセシブルなプリミティブ） |
+| lucide-react | ^0.577.0 | アイコン |
+| clsx / tailwind-merge | latest | クラス名の結合 |
 
-### Key conventions
+**バリデーション・フォーム**
 
-- **Co-location**: page-specific components live in `_components/`, server actions in `_actions/`, and Zod schemas in `_schema.ts` — all under the route folder.
-- **Shared UI**: Generic shadcn/ui primitives live in `src/components/ui/`.
-- **Utilities**: Pure logic functions (e.g., `calcSleepMinutes`, `formatMinutes`) live in `src/utils/sleep.ts` and are the primary target for unit tests.
-- **Types**: Shared TypeScript types in `src/types/` (e.g., `SleepRecord`).
-- **Supabase client**: Single shared client at `src/lib/supabase.ts` using `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` env vars.
+| ライブラリ | バージョン | 用途 |
+|---|---|---|
+| Zod | ^4.3.6 | スキーマバリデーション |
+| @conform-to/zod | ^1.17.1 | ZodスキーマをServer Actionと連携 |
+| @conform-to/react | ^1.17.1 | フォームの状態管理（useForm） |
 
-### Supabase table mapping
+**バックエンド・DB**
 
-The `sleep_records` table uses snake_case columns, mapped to camelCase in TypeScript:
-- `bed_time` → `bedTime`
-- `wake_up_time` → `wakeUpTime`
-- `type`: `"night"` | `"ohirune"`
+| ライブラリ | バージョン | 用途 |
+|---|---|---|
+| @supabase/supabase-js | ^2.99.2 | Supabase クライアント |
+| @supabase/ssr | ^0.9.0 | SSR環境でのセッション管理 |
+| server-only | ^0.0.1 | サーバー専用モジュールのブラウザ混入防止 |
 
-### Planned but not yet implemented
+**テスト**
 
-食事 (meals), 日記 (diary), 病院 (hospital) — stubs exist on the TOP page linking to `#`.
+| ライブラリ | バージョン | 用途 |
+|---|---|---|
+| Jest | ^30.3.0 | テストランナー |
+| jest-environment-jsdom | ^30.3.0 | ブラウザ環境エミュレート |
+| @testing-library/react | ^16.3.2 | コンポーネントレンダリング |
+| @testing-library/user-event | ^14.6.1 | ユーザー操作シミュレート |
+| @testing-library/jest-dom | ^6.9.1 | DOMマッチャー（toBeInTheDocument等） |
+| @types/jest | ^30.0.0 | グローバルjest型定義 |
+
+**開発ツール**
+
+| ライブラリ | バージョン | 用途 |
+|---|---|---|
+| ESLint | ^9 | Linter |
+| eslint-config-next | 16.1.6 | Next.js 推奨 Lint ルール |
+
+---
+
+## 未実装機能
+
+食事 (meals), 日記 (diary), 病院 (hospital) — TOPページにスタブあり（リンク先は `#`）。
