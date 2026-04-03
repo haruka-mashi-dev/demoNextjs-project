@@ -14,3 +14,11 @@
 // @testing-library/jest-dom のカスタムマッチャーをグローバルに登録する
 // → toBeInTheDocument(), toBeDisabled(), toHaveValue() など
 import "@testing-library/jest-dom";
+
+// jsdom は ResizeObserver を実装していないため、Radix UI（shadcn）が使う箇所でエラーになる。
+// ダミー実装でグローバルに差し替えて回避する。
+global.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};

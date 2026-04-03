@@ -8,6 +8,8 @@
 | `src/app/(app)/sleep/_schema.ts` | `sleepSchema` |
 | `src/app/(app)/sleep/_components/sleep-list.tsx` | `SleepList` |
 | `src/app/(app)/sleep/_components/sleep-pagination.tsx` | `SleepPagination` |
+| `src/app/(app)/sleep/_components/sleep-form.tsx` | `SleepForm` |
+
 
 
 ## テストフレームワーク
@@ -140,3 +142,28 @@ npm run test:watch
 
 ---
 
+---
+
+### `SleepForm`
+
+睡眠記録を入力するフォームコンポーネント。Conform + Zod でバリデーションし、Server Action でデータを保存する。
+
+**テストファイル：** `src/app/(app)/sleep/_components/__tests__/sleep-form.test.tsx`
+
+**モック対象：**
+
+| モック対象 | 理由 |
+|---|---|
+| `createSleep`（Server Action） | `"use server"` はテスト環境で動かないため `jest.fn()` で差し替え |
+| `react.useActionState` | `lastResult`（サーバーエラー）と `isPending`（送信中）を任意の値に制御するため |
+
+| # | ケース | 前提条件 | 確認内容 |
+|---|---|---|---|
+| 1 | 初期レンダリング | - | 日付・就寝時間・起床時間・お昼寝チェックボックス・送信ボタンが表示される |
+| 2 | 送信ボタン初期状態 | 就寝時間・起床時間が未入力 | 送信ボタンが `disabled` になる |
+| 3 | 送信ボタン活性化 | 就寝時間・起床時間を入力済み | 送信ボタンが `disabled` でなくなる |
+| 4 | お昼寝チェックボックス | 初期状態（夜の睡眠） | クリックするとチェック状態になる |
+| 5 | 送信中（isPending） | `useActionState` が `isPending: true` を返す | ボタンに「記録中...」が表示され `disabled` になる |
+| 6 | フォームエラー表示 | `useActionState` がフォームレベルエラーを返す | エラーメッセージがフォーム上部に表示される |
+
+---
